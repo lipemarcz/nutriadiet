@@ -1,17 +1,9 @@
-# Ignorar todos .env em qualquer pasta
+# deps e builds
+node_modules/
+dist/
+.vite/
+
+# envs
 **/.env
 **/.env.*
-
-# Mas manter o .env.example versionado
 !**/.env.example
-
-#Pastas
-.trae
-.vscode
-.venv
-.env
-.env.example
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local

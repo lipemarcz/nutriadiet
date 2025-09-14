@@ -1,3 +1,22 @@
+# 2025-09-14 — Scripts: alinhar build e scripts do package.json ao Runbook
+
+- Scope:
+  - Atualizar `scripts` no `package.json` conforme solicitado: `dev`, `build` (apenas `vite build`), `preview`, `serve`, `api`, `type-check`, `lint`, `test`, `test:api`, `feed`, `feed:auto`.
+- Files:
+  - package.json (chave `scripts` – alteração do `build` e validação geral)
+- Reasoning:
+  - Alinhar ao Runbook: separar checagem de tipos do processo de build, mantendo `type-check` dedicado e build mais rápido e previsível.
+  - Não introduzir novas dependências; apenas ajuste de comando.
+- Verification:
+  - Estrutura JSON válida; `npm run type-check` permanece disponível para gate de tipos.
+  - Sem alteração de comportamento em outros scripts.
+- Acceptance:
+  - `npm run build` usa somente `vite build`.
+  - `npm run type-check` executa `tsc --noEmit` separadamente.
+  - Demais scripts permanecem conforme especificado.
+
+---
+
 # 2025-09-14 — Infra: Rollup optional deps workaround; build/tests green
 
 - Scope:
@@ -528,5 +547,24 @@ const isStandardType = useMemo(() => MEAL_TYPES.includes(meal.name as string), [
   - Manual: navegação exibe “Restrita”; `/restrito` mantém comportamento gateado; presets 3–8 e REINICIAR funcionam.
 - Acceptance:
   - Documentos gerados e versionados; label “Restrita” visível na UI.
+
+---
+# 2025-09-14 — .gitattributes: normalizar EOL para Linux; evitar erro Vercel tsc (exit 126)
+
+- Scope:
+  - Verificar `.gitattributes` e garantir `* text=auto eol=lf`.
+  - Confirmar que o script de build não executa `tsc` (apenas `vite build`).
+- Files:
+  - .gitattributes (sem alterações — já continha `* text=auto eol=lf`).
+  - package.json (confirmado em entrada anterior: `build` → `vite build`).
+- Reasoning:
+  - Evitar falha de execução no Linux durante deploy na Vercel: `/vercel/path0/node_modules/.bin/tsc: Permission denied (exit 126)`.
+  - O problema decorre de tentar executar `tsc` no build; manter `tsc` apenas em `type-check` e assegurar EOL LF.
+- Verification:
+  - `.gitattributes` já estava correto; nenhum patch necessário.
+  - `npm run build` não invoca `tsc`; `npm run type-check` disponível separadamente.
+- Acceptance:
+  - Repositório configura EOL LF para arquivos de texto.
+  - Pipeline de build (Vercel) não executa `tsc` no build, prevenindo o erro 126.
 
 ---

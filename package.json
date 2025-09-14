@@ -6,7 +6,7 @@
   "main": "index.tsx",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "serve": "python -m http.server 8000",
     "api": "node server/index.js",

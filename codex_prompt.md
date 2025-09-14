@@ -1,206 +1,201 @@
-Implemente a feature BMTEAM no front-end (Vite + React 18 + TypeScript + Tailwind + Radix + shadcn/ui) seguindo estes requisitos. Não adicione novas dependências. Respeite TS strict, ESLint sem warnings, Vitest + RTL. Se backend não existir, trate como “known non-blocker” e use mocks locais.
+🧾 Contexto do projeto
 
-Escopo (4 passos)
-Passo 1 — Página protegida por convite (somente logados)
+Repositório: https://github.com/lipemarcz/nutriadiet
 
-Criar rota/página /bmteam que só aparece para usuários logados e convidados pelo admin (via token_generator).
+Visibilidade: Private
 
-Implementar guard de acesso:
+Branch ativa: main (migrada de master)
 
-Funções utilitárias:
+Commit recente: “Versão 1 - Nutria DIET” (contém o app completo)
 
-getCurrentUser(): { id: string; email: string } | null
+Nome no package.json (pela build log): nutria-macro@1.0.0
 
-hasAcceptedInviteFor(scope: 'BMTEAM'): boolean
+Build target: Vercel
 
-acceptInviteToken(token: string, scope: 'BMTEAM'): void (fallback localStorage)
+Build Command na Vercel: npm run build
 
-Fluxo de convite:
+Observação: .gitignore foi atualizado para ignorar **/.env e node_modules/. Alguns .env foram removidos do histórico e .env.example foi restaurado.
 
-Se a URL tiver ?invite=TOKEN, chamar acceptInviteToken(TOKEN, 'BMTEAM') e marcar aceito (persistência localStorage se não houver API).
+🧨 Erro na Vercel
 
-Estados:
+Trecho do log (Linux, Vercel CLI 47.1.1):
 
-allowed (renderiza a página)
+Running "vercel build"
+Installing dependencies...
+added 12 packages in 2s
+Running "npm run build"
 
-forbidden (403 com CTA “Solicitar acesso”)
+> nutria-macro@1.0.0 build
+> tsc && vite build
 
-loading (skeleton)
+sh: line 1: /vercel/path0/node_modules/.bin/tsc: Permission denied
+Error: Command "npm run build" exited with 126
 
-Entregar componente InviteGate e envolver a página /bmteam.
 
-Passo 2 — Cópia da Home com extras
+Sintoma principal: o script build executa tsc, mas o binário em node_modules/.bin/tsc não é executável (ou nem deveria estar sendo chamado). Isso costuma acontecer por:
 
-A /bmteam deve ser cópia visual/estrutural da Home (layout, cards, resumos, toasts), porém com as funcionalidades do Passo 3.
+typescript ausente ou mal instalado (mas há um .bin/tsc—pode estar corrompido).
 
-Navbar: adicionar item BMTEAM ativo quando na rota, com badge/label “BMTEAM”.
+Quebra de linha CRLF no bin criado (tsc com \r\n no shebang) → no Linux resulta em “Permission denied”/“node\r not found”.
 
-Passo 3 — Pré-geração de refeições (seleção 3..8)
+Permissões de execução do bin no cache do Node/Vercel (falta de +x).
 
-Na /bmteam, ao selecionar quantidade de refeições (n), pré-gerar os blocos no mesmo formato da Home, porém com ordem específica por n (ver mapeamento abaixo).
+Projeto não precisa de tsc (o build real é do Vite) — mas o script força tsc && vite build.
 
-Os blocos inicialmente exibem título da refeição e os alimentos padrão (ver Passo 3.1).
+O detalhe “added 12 packages in 2s” indica que pouquíssimas dependências estão listadas; pode estar faltando declarar typescript, vite e outras no package.json.
 
-Incluir um botão REINICIAR que restaura o estado padrão para o n atual.
+✅ Objetivo
 
-Passo 3.1 — Mapeamento de ordens e catálogo padrão
+Deixar o deploy da Vercel verde. Aceitamos:
 
-Ordens por quantidade (n):
+build apenas com vite build (typecheck separado), ou
 
-3 refs: café / almoço / jantar
+build com tsc && vite build, contanto que o tsc execute corretamente no Linux.
 
-4 refs: café / almoço / lanche da tarde / jantar
+🔎 Tarefas para o codex-cli (checklist)
 
-5 refs: café / almoço / lanche da tarde / pós-treino / jantar
+Inspecionar package.json
 
-6 refs: café / colação / almoço / lanche da tarde / pós-treino / jantar
+Verificar scripts.build (hoje parece ser tsc && vite build).
 
-7 refs: café / colação / almoço / lanche da tarde / pós-treino / jantar / ceia
+Confirmar presença de:
 
-8 refs: café / colação / almoço / lanche da tarde / pré-treino / pós-treino / jantar / ceia
+"devDependencies": {
+  "typescript": "^5.0.0",
+  "vite": "^5.0.0"
+}
 
-Catálogo por categoria (itens e quantidades padrão):
 
-Café da manhã e lanche da tarde
+Se for React/Vue/etc, conferir plugins (@vitejs/plugin-react, etc).
 
-Pão de forma (BM_TEAM) → 100g
+Normalizar quebras de linha (CRLF → LF)
 
-Ovo de galinha (TACO) → 100g
+Criar .gitattributes na raiz:
 
-Abacaxi (TACO) → 100g
+* text=auto eol=lf
 
-Pasta de amendoim (BM_TEAM) → 100g
 
-Almoço e jantar
+Rodar localmente (ou instruir via PR) para renormalizar:
 
-Arroz branco cozido (BM_TEAM) → 250g
+git add --renormalize .
+git commit -m "chore: normalize line endings to LF"
 
-Frango, grelhado (TACO) → 150g
 
-Azeite de oliva (TACO) → 8g
+Isso evita o erro clássico de shebang no Linux.
 
-Farofa (BM_TEAM) → 15g
+Escolher estratégia de build
 
-Pré e pós-treino
+Opção A (recomendada se não precisa emitir JS pelo tsc):
 
-Pão de forma (BM_TEAM) → 100g
+"scripts": {
+  "build": "vite build",
+  "typecheck": "tsc --noEmit",
+  "dev": "vite"
+}
 
-Doce de leite (TACO) → 75g
 
-Whey, protein (BM_TEAM) → 30g
+E garantir typescript e vite nas devDependencies.
 
-Ceia e colação
+Opção B (manter tsc):
 
-Iogurte natural (TACO) → 170g
+Garantir deps e adicionar um prebuild para permissões:
 
-Aveia (TACO) → 30g
+"scripts": {
+  "prebuild": "chmod +x node_modules/.bin/tsc || true",
+  "build": "tsc && vite build",
+  "dev": "vite"
+}
 
-Whey (BM_TEAM) → 15g
 
-Abacaxi (TACO) → 200g
+Verificar tsconfig.json (incl/exclude corretos).
 
-Arquivos/Componentes a criar/alterar (sem novas deps)
+Node version
 
-Roteamento/UI
+Definir engines caso necessário:
 
-src/routes/bmteam.tsx (ou src/pages/bmteam.tsx, conforme projeto)
+"engines": { "node": ">=18" }
 
-src/components/bmteam/InviteGate.tsx
 
-src/components/bmteam/MealsGrid.tsx
+(Vercel usa Node 18/20; garantir compatibilidade do Vite/TS).
 
-Navbar existente: adicionar link “BMTEAM”
+Vercel config
 
-Serviço de presets
+Se houver vercel.json, checar se não conflita com o comando de build.
 
-src/components/bmteam/MealPresetService.ts
+Se for monorepo, conferir rootDirectory.
 
-getOrder(n: number): CategoryKey[]
+.gitignore
 
-getDefaultMeals(n: number): Meal[] (usa catálogo por categoria)
+Confirmar que contém:
 
-reset(n: number): Meal[] (estrutura idempotente para o botão REINICIAR)
+node_modules/
+dist/
+.next/
+**/.env
+**/.env.*
+!**/.env.example
 
-Definir CategoryKey (ex.: 'cafe' | 'almoco' | 'lanche_tarde' | 'jantar' | 'colacao' | 'pre_treino' | 'pos_treino' | 'ceia')
 
-Utils de acesso
+Não versionar node_modules.
 
-src/utils/auth.ts com getCurrentUser, hasAcceptedInviteFor, acceptInviteToken
+(Opcional) Fast typecheck no CI
 
-Fallback persistente: localStorage (chaves: bmteam:inviteAccepted, bmteam:scope:BMTEAM)
+Criar workflow ou script separado typecheck para não travar deploy.
 
-Estado/Interação
+💡 Patches sugeridos (exemplos)
+Patch 1 — trocar build para só Vite + typecheck separado
+--- a/package.json
++++ b/package.json
+@@
+ {
+   "name": "nutria-macro",
+   "version": "1.0.0",
+   "private": true,
+   "scripts": {
+-    "build": "tsc && vite build",
++    "build": "vite build",
++    "typecheck": "tsc --noEmit",
+     "dev": "vite"
+   },
+   "devDependencies": {
+-    "typescript": "^5.0.0"
++    "typescript": "^5.4.0",
++    "vite": "^5.2.0"
+   }
+ }
 
-MealsGrid deve receber count (3..8), renderizar blocos na ordem de getOrder(count), popular com getDefaultMeals(count), e expor ação REINICIAR.
+Patch 2 — manter tsc, garantindo permissão
+--- a/package.json
++++ b/package.json
+@@
+   "scripts": {
+-    "build": "tsc && vite build",
++    "prebuild": "chmod +x node_modules/.bin/tsc || true",
++    "build": "tsc && vite build",
+     "dev": "vite"
+   }
 
-UI/UX
+Patch 3 — .gitattributes para LF
+* text=auto eol=lf
 
-Usar Radix + shadcn/ui + Tailwind.
+▶️ Passos de verificação (pós-fix)
 
-Acessibilidade: foco visível, semântica correta, contrastes OK.
+npm ci
 
-Página deve manter consistência com a Home (containers, spacing, títulos, toasts).
+npm run build (Linux) → deve completar sem “Permission denied”.
 
-forbidden renderiza card 403 com CTA “Solicitar acesso”.
+Commit + push na main.
 
-Qualidade / Guardrails
+Vercel deve reconstruir e publicar sem erros.
 
-Sem novas dependências.
+Se precisar, o codex-cli pode abrir um PR com:
 
-npm run lint → 0 warnings / 0 errors
+Ajustes no package.json (scripts e devDependencies),
 
-npm run type-check → pass
+Adição do .gitattributes,
 
-npm run build && npm run preview → sem erros
+Conferência do .gitignore,
 
-Não quebrar UI se /api/me indisponível; use mocks.
+(Opcional) vercel.json/engines.
 
-Testes (Vitest + React Testing Library)
-
-tests/bmteam/meal-preset.spec.ts
-
-Para n = 3..8, getOrder(n) retorna exatamente as sequências definidas.
-
-getDefaultMeals(n) traz itens/quantidades corretos por categoria.
-
-reset(n) restaura o estado inicial.
-
-tests/bmteam/invite-gate.spec.tsx
-
-Renderiza children quando hasAcceptedInviteFor('BMTEAM') === true.
-
-Mostra 403/CTA quando false.
-
-Aceita convite via ?invite=TOKEN e passa a permitir acesso (simular localStorage).
-
-Critérios de Aceitação (checks finais)
-
-Navbar mostra BMTEAM e navega para /bmteam.
-
-Usuário não logado → bloqueado/redirect conforme padrão do app; logado sem convite aceito → 403 com CTA.
-
-Usuário logado com convite aceito acessa /bmteam.
-
-Selecionar 5 refeições gera exatamente: café, almoço, lanche da tarde, pós-treino, jantar com itens padrão.
-
-Botão REINICIAR restaura o padrão para o n atual.
-
-Build/lint/type-check/preview ok.
-
-Registro de mudanças
-
-Adicionar entrada no docs/TRAEAI.md (Append-only) com: Scope/Files/Reasoning/Verification/Acceptance citando esta tarefa.
-
-Saídas esperadas deste prompt
-
-Rota /bmteam funcional, protegida por InviteGate.
-
-Pré-geração correta (3..8) e botão REINICIAR operante.
-
-MealPresetService implementado e testado.
-
-Testes Vitest + RTL cobrindo presets e gate de convite.
-
-Ajuste da Navbar e consistência visual com a Home.
-
-Executar agora: implementar tudo acima, garantindo que os testes e quality gates passem ao final.
+Qualquer uma das duas estratégias (A ou B) resolve; eu prefiro a A (vite build + typecheck separado) por ser mais simples e robusta no ambiente da Vercel.

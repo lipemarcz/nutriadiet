@@ -1,3 +1,21 @@
+# 2025-09-14 — Infra: Rollup optional deps workaround; build/tests green
+
+- Scope:
+  - Remover node_modules e package-lock.json; reinstalar dependências (npm i).
+  - Sem mudanças em package.json; apenas reinstalação limpa.
+- Files:
+  - (infra) node_modules/ (reinstalado)
+- Reasoning:
+  - Resolver falha do Rollup optional dependency (@rollup/rollup-*-*), impedindo build e testes.
+- Verification:
+  - `npm run build` → OK
+  - `npm run test` → 70 testes passando (13 arquivos)
+  - `npm run lint` / `npm run type-check` → OK
+- Acceptance:
+  - Build e testes verdes sem alteração de dependências.
+
+---
+
 # 2025-09-14 — UI copy: label “Restrita”, 403 CTA simplificado, tutorial atualizado
 
 - Scope:
@@ -490,3 +508,25 @@ const isStandardType = useMemo(() => MEAL_TYPES.includes(meal.name as string), [
 ---
 
 *This log follows append-only pattern - new entries are added at the top*
+# 2025-09-14 — PRD e Contexto da área “Restrita”; ajuste de label
+
+- Scope:
+  - Gerar `PRD_new_feature.md` com objetivos, escopo, requisitos, critérios, riscos/decisões da nova feature protegida.
+  - Gerar `context.md` consolidando regras dos passos 1, 2, 3 e 3.1 (ordens 3–8 e listas com gramas; botão REINICIAR).
+  - Ajustar label de navegação para “Restrita” (antes: “Restrito”).
+- Files:
+  - PRD_new_feature.md (novo)
+  - context.md (novo)
+  - App.tsx (label do link de navegação “Restrita”)
+- Reasoning:
+  - Documentar formalmente a feature já implementada (rota `/restrito`, InviteGate, presets 3–8 e REINICIAR) para alinhamento do time e rastreabilidade.
+  - Corrigir a label de navegação para manter consistência com decisões anteriores (refs: tema dark único, rename para `/restrito`, remoção de “Solicitar acesso”, limpeza de repo, remoção de %/fibras onde aplicável).
+- Verification:
+  - `npm run lint` → OK (0 errors/warnings)
+  - `npm run type-check` → OK
+  - `npm run build` → falha conhecida de optional deps do Rollup (@rollup/rollup-*-*). Sem alterar deps por política. Workaround: remover `node_modules` + `package-lock.json` e reinstalar.
+  - Manual: navegação exibe “Restrita”; `/restrito` mantém comportamento gateado; presets 3–8 e REINICIAR funcionam.
+- Acceptance:
+  - Documentos gerados e versionados; label “Restrita” visível na UI.
+
+---

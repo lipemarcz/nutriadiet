@@ -29,7 +29,7 @@ const AppContent: React.FC = () => {
   const navigationLinks = [
     { id: 'meal-builder', label: 'Inicio', icon: null },
     { id: 'tutorial', label: 'Tutorial', icon: null },
-    { id: 'restrito', label: 'Restrito', icon: null },
+    { id: 'restrito', label: 'Restrita', icon: null },
   ]
   
   // Global application state
